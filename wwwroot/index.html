@@ -83,6 +83,7 @@
       padding: 10px;
       background-color: #ffffff;
       border-top: 1px solid #ccc;
+      flex-direction: column;
     }
     .input-area input {
       flex: 1;
@@ -91,13 +92,14 @@
       border-radius: 20px;
       outline: none;
       font-size: 14px;
+      width: 100%;
     }
     .input-area button {
       background-color: #928dab;
       color: white;
       border: none;
       padding: 10px 20px;
-      margin-left: 10px;
+      margin-top: 10px;
       border-radius: 20px;
       cursor: pointer;
       font-size: 14px;
@@ -106,6 +108,44 @@
     .input-area button:hover {
       background-color: #1f1c2c;
     }
+    /* Reply preview container (shown above the input) */
+    .reply-container {
+      display: none;
+      background-color: #eef;
+      padding: 8px 15px;
+      border-left: 3px solid #928dab;
+      margin: 5px 0;
+      font-size: 13px;
+      width: 100%;
+      position: relative;
+    }
+    .reply-container button {
+      background: transparent;
+      border: none;
+      color: #928dab;
+      cursor: pointer;
+      font-size: 12px;
+      position: absolute;
+      right: 10px;
+      top: 8px;
+    }
+    /* Style for showing reply context within a message bubble */
+    .reply-box {
+      border-left: 2px solid #928dab;
+      padding-left: 10px;
+      margin-bottom: 5px;
+      font-size: 12px;
+      color: #555;
+    }
+    /* Reply button inside a message bubble */
+    .reply-button {
+      background: transparent;
+      border: none;
+      color: #008069;
+      cursor: pointer;
+      font-size: 12px;
+      margin-top: 5px;
+    }
   </style>
 </head>
 <body>
@@ -113,6 +153,11 @@
   <div class="chat-container">
     <div id="chat" class="message-list"></div>
     <div id="typingIndicator" class="typing-indicator" style="display:none;"></div>
+    <!-- Reply preview container -->
+    <div id="replyContainer" class="reply-container">
+      <span id="replyText"></span>
+      <button onclick="cancelReply()">X</button>
+    </div>
     <div class="input-area">
       <input type="text" id="messageInput" placeholder="Type a message...">
       <button id="sendButton">Send</button>
@@ -139,6 +184,11 @@
     const chatDiv = document.getElementById("chat");
     const typingIndicator = document.getElementById("typingIndicator");
     const messageInput = document.getElementById("messageInput");
+    const replyContainer = document.getElementById("replyContainer");
+    const replyText = document.getElementById("replyText");
+
+    // Global variable to hold the ID of the message being replied to.
+    let replyToMessageId = null;
 
     // Build the SignalR connection.
     const connection = new signalR.HubConnectionBuilder()
@@ -151,87 +201,19 @@
       messageElem.classList.add("message");
       messageElem.classList.add(isMyMessage ? "my-message" : "other-message");
 
-      // Display the random sci-fi name for this message.
-      messageElem.innerHTML = `<strong>${chatMessage.displayName}</strong><br>${chatMessage.message}`;
+      // If the message is a reply, show a reply preview within the bubble.
+      if (chatMessage.replyToMessageId) {
+        const replyBox = document.createElement("div");
+        replyBox.classList.add("reply-box");
+        // For simplicity, we display the original message ID.
+        // In a full implementation, you might store and display the original sender and a snippet.
+        replyBox.textContent = "Reply to: " + chatMessage.replyToMessageId;
+        messageElem.appendChild(replyBox);
+      }
+      
+      // Main message content.
+      messageElem.innerHTML += `<strong>${chatMessage.displayName}</strong><br>${chatMessage.message}`;
       
       // If the message is from you, add a status indicator.
       if (isMyMessage) {
-        messageElem.innerHTML += `<div class="status" id="status-${chatMessage.id}">Sent</div>`;
-        // Simulate updating the status to "Read" after 2 seconds.
-        setTimeout(() => {
-          const statusSpan = document.getElementById(`status-${chatMessage.id}`);
-          if (statusSpan) {
-            statusSpan.textContent = "Read";
-          }
-        }, 2000);
-      }
-      chatDiv.appendChild(messageElem);
-      chatDiv.scrollTop = chatDiv.scrollHeight;
-    }
-
-    // Handle incoming messages.
-    connection.on("ReceiveMessage", function (chatMessage) {
-      const isMyMessage = chatMessage.senderId === clientId;
-      appendMessage(chatMessage, isMyMessage);
-    });
-
-    // Handle typing indicator events.
-    connection.on("UserTyping", function (displayName) {
-      typingIndicator.textContent = displayName + " is typing...";
-      typingIndicator.style.display = "block";
-      // Hide the indicator after 3 seconds.
-      setTimeout(() => {
-        typingIndicator.style.display = "none";
-      }, 3000);
-    });
-
-    // Start the SignalR connection.
-    connection.start().then(function () {
-      console.log("Connected as " + clientId);
-      // Load previous messages (only those within the last 24 hours).
-      fetch('/messages')
-        .then(response => response.json())
-        .then(data => {
-          data.forEach(chatMessage => {
-            const isMyMessage = chatMessage.senderId === clientId;
-            appendMessage(chatMessage, isMyMessage);
-          });
-        });
-    }).catch(function (err) {
-      console.error(err.toString());
-    });
-
-    // Throttle for typing events.
-    let typingTimeout;
-    messageInput.addEventListener("input", function () {
-      if (this.value.length > 0) {
-        // For the typing indicator, choose a random name.
-        const typingName = getRandomName();
-        connection.invoke("Typing", clientId, typingName).catch(err => console.error(err.toString()));
-        clearTimeout(typingTimeout);
-        typingTimeout = setTimeout(() => {
-          // Optionally, send a "stop typing" event here if needed.
-        }, 2000);
-      }
-    });
-
-    // Send a message when the send button is clicked.
-    document.getElementById("sendButton").addEventListener("click", function () {
-      const message = messageInput.value.trim();
-      if (message) {
-        // For every message, choose a new random sci-fi name.
-        const displayName = getRandomName();
-        connection.invoke("SendMessage", clientId, displayName, message).catch(err => console.error(err.toString()));
-        messageInput.value = "";
-      }
-    });
-
-    // Allow sending a message by pressing the Enter key.
-    messageInput.addEventListener("keyup", function (event) {
-      if (event.key === "Enter") {
-        document.getElementById("sendButton").click();
-      }
-    });
-  </script>
-</body>
-</html>
+        messageElem.innerHTML += `<div class="status" id="status-${chatMessage.id}">Sent</div>
