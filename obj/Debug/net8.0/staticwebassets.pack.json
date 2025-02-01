@@ -1,0 +1,25 @@
+{
+  "Files": [
+    {
+      "Id": "C:\\Users\\harigovind\\Desktop\\AnonymousLiveChat\\wwwroot\\index.html",
+      "PackagePath": "staticwebassets\\index.html"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.AnonymousLiveChat.Microsoft.AspNetCore.StaticWebAssets.props",
+      "PackagePath": "build\\Microsoft.AspNetCore.StaticWebAssets.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.build.AnonymousLiveChat.props",
+      "PackagePath": "build\\AnonymousLiveChat.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildMultiTargeting.AnonymousLiveChat.props",
+      "PackagePath": "buildMultiTargeting\\AnonymousLiveChat.props"
+    },
+    {
+      "Id": "obj\\Debug\\net8.0\\staticwebassets\\msbuild.buildTransitive.AnonymousLiveChat.props",
+      "PackagePath": "buildTransitive\\AnonymousLiveChat.props"
+    }
+  ],
+  "ElementsToRemove": []
+}

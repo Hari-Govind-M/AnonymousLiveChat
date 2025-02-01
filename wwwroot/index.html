@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sci‑Fi Anonymous Chat</title>
+  <style>
+    /* Global resets */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f7f7f7;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Header with a gradient */
+    .header {
+      background: linear-gradient(90deg, #1f1c2c, #928dab);
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    /* Chat container */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: #e5e5e5;
+      overflow: hidden;
+    }
+    /* Message list area */
+    .message-list {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background-color: #f0f0f0;
+    }
+    /* Chat bubble styling */
+    .message {
+      max-width: 70%;
+      padding: 10px 15px;
+      border-radius: 15px;
+      margin-bottom: 10px;
+      position: relative;
+      font-size: 14px;
+      line-height: 1.4;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .my-message {
+      background-color: #d1f0d1;
+      align-self: flex-end;
+      border-top-right-radius: 0;
+    }
+    .other-message {
+      background-color: #ffffff;
+      align-self: flex-start;
+      border-top-left-radius: 0;
+    }
+    /* Status text for sent/read */
+    .status {
+      font-size: 10px;
+      color: #888;
+      margin-top: 5px;
+      text-align: right;
+    }
+    /* Typing indicator styling */
+    .typing-indicator {
+      font-style: italic;
+      color: #555;
+      padding: 5px 15px;
+      font-size: 13px;
+    }
+    /* Input area */
+    .input-area {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      background-color: #ffffff;
+      border-top: 1px solid #ccc;
+    }
+    .input-area input {
+      flex: 1;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      outline: none;
+      font-size: 14px;
+    }
+    .input-area button {
+      background-color: #928dab;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin-left: 10px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: background-color 0.3s;
+    }
+    .input-area button:hover {
+      background-color: #1f1c2c;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">Sci‑Fi Anonymous Chat</div>
+  <div class="chat-container">
+    <div id="chat" class="message-list"></div>
+    <div id="typingIndicator" class="typing-indicator" style="display:none;"></div>
+    <div class="input-area">
+      <input type="text" id="messageInput" placeholder="Type a message...">
+      <button id="sendButton">Send</button>
+    </div>
+  </div>
+
+  <!-- Include SignalR client library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js" crossorigin="anonymous"></script>
+  <script>
+    // Generate a unique client ID for this session.
+    const clientId = 'client-' + Math.floor(Math.random() * 1000000);
+    // A list of Sci-Fi themed names.
+    const sciFiNames = [
+      "Spock", "Darth Vader", "Luke Skywalker", "Leia Organa", "Yoda",
+      "Gandalf", "Neo", "Trinity", "Ripley", "Deckard",
+      "Ender", "Zaphod", "Leeloo", "Katniss", "Morpheus",
+      "Ellen Ripley", "Scorpion", "Optimus", "Megatron", "Thanos"
+    ];
+    // Return a random name from the list.
+    function getRandomName() {
+      return sciFiNames[Math.floor(Math.random() * sciFiNames.length)];
+    }
+
+    const chatDiv = document.getElementById("chat");
+    const typingIndicator = document.getElementById("typingIndicator");
+    const messageInput = document.getElementById("messageInput");
+
+    // Build the SignalR connection.
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("/chat")
+      .build();
+
+    // Append a chat message bubble to the chat window.
+    function appendMessage(chatMessage, isMyMessage) {
+      const messageElem = document.createElement("div");
+      messageElem.classList.add("message");
+      messageElem.classList.add(isMyMessage ? "my-message" : "other-message");
+
+      // Display the random sci-fi name for this message.
+      messageElem.innerHTML = `<strong>${chatMessage.displayName}</strong><br>${chatMessage.message}`;
+      
+      // If the message is from you, add a status indicator.
+      if (isMyMessage) {
+        messageElem.innerHTML += `<div class="status" id="status-${chatMessage.id}">Sent</div>`;
+        // Simulate updating the status to "Read" after 2 seconds.
+        setTimeout(() => {
+          const statusSpan = document.getElementById(`status-${chatMessage.id}`);
+          if (statusSpan) {
+            statusSpan.textContent = "Read";
+          }
+        }, 2000);
+      }
+      chatDiv.appendChild(messageElem);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    // Handle incoming messages.
+    connection.on("ReceiveMessage", function (chatMessage) {
+      const isMyMessage = chatMessage.senderId === clientId;
+      appendMessage(chatMessage, isMyMessage);
+    });
+
+    // Handle typing indicator events.
+    connection.on("UserTyping", function (displayName) {
+      typingIndicator.textContent = displayName + " is typing...";
+      typingIndicator.style.display = "block";
+      // Hide the indicator after 3 seconds.
+      setTimeout(() => {
+        typingIndicator.style.display = "none";
+      }, 3000);
+    });
+
+    // Start the SignalR connection.
+    connection.start().then(function () {
+      console.log("Connected as " + clientId);
+      // Load previous messages (only those within the last 24 hours).
+      fetch('/messages')
+        .then(response => response.json())
+        .then(data => {
+          data.forEach(chatMessage => {
+            const isMyMessage = chatMessage.senderId === clientId;
+            appendMessage(chatMessage, isMyMessage);
+          });
+        });
+    }).catch(function (err) {
+      console.error(err.toString());
+    });
+
+    // Throttle for typing events.
+    let typingTimeout;
+    messageInput.addEventListener("input", function () {
+      if (this.value.length > 0) {
+        // For the typing indicator, choose a random name.
+        const typingName = getRandomName();
+        connection.invoke("Typing", clientId, typingName).catch(err => console.error(err.toString()));
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {
+          // Optionally, send a "stop typing" event here if needed.
+        }, 2000);
+      }
+    });
+
+    // Send a message when the send button is clicked.
+    document.getElementById("sendButton").addEventListener("click", function () {
+      const message = messageInput.value.trim();
+      if (message) {
+        // For every message, choose a new random sci-fi name.
+        const displayName = getRandomName();
+        connection.invoke("SendMessage", clientId, displayName, message).catch(err => console.error(err.toString()));
+        messageInput.value = "";
+      }
+    });
+
+    // Allow sending a message by pressing the Enter key.
+    messageInput.addEventListener("keyup", function (event) {
+      if (event.key === "Enter") {
+        document.getElementById("sendButton").click();
+      }
+    });
+  </script>
+</body>
+</html>

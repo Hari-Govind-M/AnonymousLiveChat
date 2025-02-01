@@ -1,0 +1,39 @@
+{
+  "Version": 1,
+  "Hash": "tJhmWr2lvLNhspIRKRa+0QAz/kejiu1MS/3FBLCXl/4=",
+  "Source": "AnonymousLiveChat",
+  "BasePath": "_content/AnonymousLiveChat",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [
+    {
+      "Name": "AnonymousLiveChat\\wwwroot",
+      "Source": "AnonymousLiveChat",
+      "ContentRoot": "C:\\Users\\harigovind\\Desktop\\AnonymousLiveChat\\wwwroot\\",
+      "BasePath": "_content/AnonymousLiveChat",
+      "Pattern": "**"
+    }
+  ],
+  "Assets": [
+    {
+      "Identity": "C:\\Users\\harigovind\\Desktop\\AnonymousLiveChat\\wwwroot\\index.html",
+      "SourceId": "AnonymousLiveChat",
+      "SourceType": "Discovered",
+      "ContentRoot": "C:\\Users\\harigovind\\Desktop\\AnonymousLiveChat\\wwwroot\\",
+      "BasePath": "_content/AnonymousLiveChat",
+      "RelativePath": "index.html",
+      "AssetKind": "All",
+      "AssetMode": "All",
+      "AssetRole": "Primary",
+      "AssetMergeBehavior": "PreferTarget",
+      "AssetMergeSource": "",
+      "RelatedAsset": "",
+      "AssetTraitName": "",
+      "AssetTraitValue": "",
+      "CopyToOutputDirectory": "Never",
+      "CopyToPublishDirectory": "PreserveNewest",
+      "OriginalItemSpec": "wwwroot\\index.html"
+    }
+  ]
+}
