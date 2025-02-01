@@ -1,75 +1,325 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>Anonymous Live Chat</title>
+  <meta charset="UTF-8">
+  <title>Sci‑Fi Anonymous Chat</title>
+  <!-- Import Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    #chat { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; margin-bottom: 10px; }
-    #messageInput { width: 80%; }
+    /* Global resets */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #f0f2f5, #e0e5ec);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Header with gradient and shadow */
+    .header {
+      background: linear-gradient(90deg, #1f1c2c, #928dab);
+      color: white;
+      padding: 20px;
+      text-align: center;
+      font-size: 26px;
+      font-weight: 700;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    /* Chat container */
+    .chat-container {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background-color: #fff;
+      margin: 10px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    /* Message list area with smooth scrolling */
+    .message-list {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      background: #f7f7f7;
+      scroll-behavior: smooth;
+    }
+    /* Chat bubble styling */
+    .message {
+      max-width: 70%;
+      padding: 12px 18px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+      font-size: 15px;
+      line-height: 1.5;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInUp 0.4s forwards;
+    }
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .my-message {
+      background-color: #d1f0d1;
+      align-self: flex-end;
+      border-top-right-radius: 0;
+    }
+    .other-message {
+      background-color: #ffffff;
+      align-self: flex-start;
+      border-top-left-radius: 0;
+    }
+    /* Status text for sent/read */
+    .status {
+      font-size: 10px;
+      color: #888;
+      margin-top: 5px;
+      text-align: right;
+    }
+    /* Typing indicator styling */
+    .typing-indicator {
+      font-style: italic;
+      color: #555;
+      padding: 5px 15px;
+      font-size: 13px;
+    }
+    /* Input area */
+    .input-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 15px;
+      background-color: #fff;
+      border-top: 1px solid #ccc;
+    }
+    .input-area input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 25px;
+      outline: none;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+    .input-area button {
+      background-color: #928dab;
+      color: white;
+      border: none;
+      padding: 10px 25px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: background-color 0.3s;
+    }
+    .input-area button:hover {
+      background-color: #1f1c2c;
+    }
+    /* Reply preview container (shown above the input area) */
+    .reply-container {
+      display: none;
+      background-color: #eef;
+      padding: 8px 15px;
+      border-left: 3px solid #928dab;
+      margin-bottom: 10px;
+      font-size: 13px;
+      width: 100%;
+      position: relative;
+      border-radius: 5px;
+    }
+    .reply-container button {
+      background: transparent;
+      border: none;
+      color: #928dab;
+      cursor: pointer;
+      font-size: 12px;
+      position: absolute;
+      right: 10px;
+      top: 8px;
+    }
+    /* Style for showing reply context within a message bubble */
+    .reply-box {
+      border-left: 2px solid #928dab;
+      padding-left: 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #555;
+    }
+    /* Reply button inside a message bubble */
+    .reply-button {
+      background: transparent;
+      border: none;
+      color: #008069;
+      cursor: pointer;
+      font-size: 13px;
+      margin-top: 8px;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
-  <h1>Anonymous Live Chat</h1>
-  <div id="chat"></div>
-  <input type="text" id="messageInput" placeholder="Type a message..." />
-  <button id="sendButton">Send</button>
+  <div class="header">Sci‑Fi Anonymous Chat</div>
+  <div class="chat-container">
+    <div id="chat" class="message-list"></div>
+    <div id="typingIndicator" class="typing-indicator" style="display:none;"></div>
+    <!-- Reply preview container -->
+    <div id="replyContainer" class="reply-container">
+      <span id="replyText"></span>
+      <button onclick="cancelReply()">X</button>
+    </div>
+    <div class="input-area">
+      <input type="text" id="messageInput" placeholder="Type a message...">
+      <button id="sendButton">Send</button>
+    </div>
+  </div>
 
-  <!-- Reference the SignalR client library from CDN -->
+  <!-- Include SignalR client library -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js" crossorigin="anonymous"></script>
   <script>
-    // Generate a random username for anonymity.
-    const user = 'User-' + Math.floor(Math.random() * 100000);
+    // Generate a unique client ID for this session.
+    const clientId = 'client-' + Math.floor(Math.random() * 1000000);
+    // A list of Sci-Fi themed names.
+    const sciFiNames = [
+      "Spock", "Darth Vader", "Luke Skywalker", "Leia Organa", "Yoda",
+      "Gandalf", "Neo", "Trinity", "Ripley", "Deckard",
+      "Ender", "Zaphod", "Leeloo", "Katniss", "Morpheus",
+      "Ellen Ripley", "Scorpion", "Optimus", "Megatron", "Thanos"
+    ];
+    // Return a random name from the list.
+    function getRandomName() {
+      return sciFiNames[Math.floor(Math.random() * sciFiNames.length)];
+    }
+
     const chatDiv = document.getElementById("chat");
+    const typingIndicator = document.getElementById("typingIndicator");
+    const messageInput = document.getElementById("messageInput");
+    const replyContainer = document.getElementById("replyContainer");
+    const replyText = document.getElementById("replyText");
+
+    // Global variable to hold the ID of the message being replied to.
+    let replyToMessageId = null;
 
     // Build the SignalR connection.
     const connection = new signalR.HubConnectionBuilder()
       .withUrl("/chat")
       .build();
 
-    // When a new message is received, append it to the chat window.
-    connection.on("ReceiveMessage", function (chatMessage) {
-      const time = new Date(chatMessage.timestamp).toLocaleTimeString();
+    // Append a chat message bubble to the chat window.
+    function appendMessage(chatMessage, isMyMessage) {
       const messageElem = document.createElement("div");
-      messageElem.textContent = `[${time}] ${chatMessage.displayName}: ${chatMessage.message}`;
+      messageElem.classList.add("message");
+      messageElem.classList.add(isMyMessage ? "my-message" : "other-message");
+
+      // If the message is a reply, show a reply preview within the bubble.
+      if (chatMessage.replyToMessageId) {
+        const replyBox = document.createElement("div");
+        replyBox.classList.add("reply-box");
+        // For simplicity, we display the original message ID.
+        // In a full implementation, you might display the original sender's name and a snippet.
+        replyBox.textContent = "Reply to: " + chatMessage.replyToMessageId;
+        messageElem.appendChild(replyBox);
+      }
+      
+      // Main message content.
+      messageElem.innerHTML += `<strong>${chatMessage.displayName}</strong><br>${chatMessage.message}`;
+      
+      // If the message is from you, add a status indicator.
+      if (isMyMessage) {
+        messageElem.innerHTML += `<div class="status" id="status-${chatMessage.id}">Sent</div>`;
+        setTimeout(() => {
+          const statusSpan = document.getElementById(`status-${chatMessage.id}`);
+          if (statusSpan) statusSpan.textContent = "Read";
+        }, 2000);
+      }
+      
+      // Add a "Reply" button to each message.
+      const replyBtn = document.createElement("button");
+      replyBtn.textContent = "Reply";
+      replyBtn.classList.add("reply-button");
+      replyBtn.onclick = () => { setReply(chatMessage); };
+      messageElem.appendChild(replyBtn);
+      
       chatDiv.appendChild(messageElem);
       chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    // Handle incoming messages.
+    connection.on("ReceiveMessage", function (chatMessage) {
+      const isMyMessage = chatMessage.senderId === clientId;
+      appendMessage(chatMessage, isMyMessage);
     });
 
-    // Start the connection.
+    // Handle typing indicator events.
+    connection.on("UserTyping", function (displayName) {
+      typingIndicator.textContent = displayName + " is typing...";
+      typingIndicator.style.display = "block";
+      setTimeout(() => { typingIndicator.style.display = "none"; }, 3000);
+    });
+
+    // Start the SignalR connection.
     connection.start().then(function () {
-      console.log("Connected as " + user);
+      console.log("Connected as " + clientId);
       // Load previous messages (only those within the last 24 hours).
       fetch('/messages')
         .then(response => response.json())
         .then(data => {
           data.forEach(chatMessage => {
-            const time = new Date(chatMessage.timestamp).toLocaleTimeString();
-            const messageElem = document.createElement("div");
-            messageElem.textContent = `[${time}] ${chatMessage.displayName}: ${chatMessage.message}`;
-            chatDiv.appendChild(messageElem);
+            const isMyMessage = chatMessage.senderId === clientId;
+            appendMessage(chatMessage, isMyMessage);
           });
-          chatDiv.scrollTop = chatDiv.scrollHeight;
         });
     }).catch(function (err) {
       console.error(err.toString());
     });
 
-    // Send a message when the send button is clicked.
-    document.getElementById("sendButton").addEventListener("click", function () {
-      const messageInput = document.getElementById("messageInput");
-      const message = messageInput.value.trim();
-      if (message) {
-        connection.invoke("SendMessage", user, user, message)
-          .catch(function (err) {
-            console.error(err.toString());
-          });
-        messageInput.value = "";
+    // Throttle typing events.
+    let typingTimeout;
+    messageInput.addEventListener("input", function () {
+      if (this.value.length > 0) {
+        const typingName = getRandomName();
+        connection.invoke("Typing", clientId, typingName)
+          .catch(err => console.error(err.toString()));
+        clearTimeout(typingTimeout);
+        typingTimeout = setTimeout(() => {}, 2000);
       }
     });
 
-    // Allow sending the message with the Enter key.
-    document.getElementById("messageInput").addEventListener("keyup", function (event) {
+    // Set the reply context when the user clicks "Reply" on a message.
+    function setReply(message) {
+      replyToMessageId = message.id;
+      let replyPreview = message.message.length > 30 ? message.message.substring(0, 30) + "..." : message.message;
+      replyContainer.style.display = "block";
+      replyText.textContent = "Replying to: " + replyPreview;
+    }
+
+    // Cancel the reply context.
+    function cancelReply() {
+      replyToMessageId = null;
+      replyContainer.style.display = "none";
+    }
+
+    // Send a message when the send button is clicked.
+    document.getElementById("sendButton").addEventListener("click", function () {
+      const message = messageInput.value.trim();
+      console.log("Send clicked. Message:", message, "ReplyTo:", replyToMessageId);
+      if (message) {
+        const displayName = getRandomName();
+        connection.invoke("SendMessage", clientId, displayName, message, replyToMessageId || "")
+          .then(() => console.log("Message sent successfully"))
+          .catch(err => console.error("Error sending message:", err.toString()));
+        messageInput.value = "";
+        cancelReply();
+      }
+    });
+
+    // Allow sending a message by pressing Enter.
+    messageInput.addEventListener("keyup", function (event) {
       if (event.key === "Enter") {
         document.getElementById("sendButton").click();
       }
