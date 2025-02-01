@@ -79,20 +79,20 @@
     /* Input area */
     .input-area {
       display: flex;
+      flex-direction: column;
       align-items: center;
       padding: 10px;
       background-color: #ffffff;
       border-top: 1px solid #ccc;
-      flex-direction: column;
+      width: 100%;
     }
     .input-area input {
-      flex: 1;
+      width: 100%;
       padding: 10px;
       border: 1px solid #ccc;
       border-radius: 20px;
       outline: none;
       font-size: 14px;
-      width: 100%;
     }
     .input-area button {
       background-color: #928dab;
@@ -108,7 +108,7 @@
     .input-area button:hover {
       background-color: #1f1c2c;
     }
-    /* Reply preview container (shown above the input) */
+    /* Reply preview container (shown above the input area) */
     .reply-container {
       display: none;
       background-color: #eef;
@@ -124,96 +124,4 @@
       border: none;
       color: #928dab;
       cursor: pointer;
-      font-size: 12px;
-      position: absolute;
-      right: 10px;
-      top: 8px;
-    }
-    /* Style for showing reply context within a message bubble */
-    .reply-box {
-      border-left: 2px solid #928dab;
-      padding-left: 10px;
-      margin-bottom: 5px;
-      font-size: 12px;
-      color: #555;
-    }
-    /* Reply button inside a message bubble */
-    .reply-button {
-      background: transparent;
-      border: none;
-      color: #008069;
-      cursor: pointer;
-      font-size: 12px;
-      margin-top: 5px;
-    }
-  </style>
-</head>
-<body>
-  <div class="header">Sci‑Fi Anonymous Chat</div>
-  <div class="chat-container">
-    <div id="chat" class="message-list"></div>
-    <div id="typingIndicator" class="typing-indicator" style="display:none;"></div>
-    <!-- Reply preview container -->
-    <div id="replyContainer" class="reply-container">
-      <span id="replyText"></span>
-      <button onclick="cancelReply()">X</button>
-    </div>
-    <div class="input-area">
-      <input type="text" id="messageInput" placeholder="Type a message...">
-      <button id="sendButton">Send</button>
-    </div>
-  </div>
-
-  <!-- Include SignalR client library -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js" crossorigin="anonymous"></script>
-  <script>
-    // Generate a unique client ID for this session.
-    const clientId = 'client-' + Math.floor(Math.random() * 1000000);
-    // A list of Sci-Fi themed names.
-    const sciFiNames = [
-      "Spock", "Darth Vader", "Luke Skywalker", "Leia Organa", "Yoda",
-      "Gandalf", "Neo", "Trinity", "Ripley", "Deckard",
-      "Ender", "Zaphod", "Leeloo", "Katniss", "Morpheus",
-      "Ellen Ripley", "Scorpion", "Optimus", "Megatron", "Thanos"
-    ];
-    // Return a random name from the list.
-    function getRandomName() {
-      return sciFiNames[Math.floor(Math.random() * sciFiNames.length)];
-    }
-
-    const chatDiv = document.getElementById("chat");
-    const typingIndicator = document.getElementById("typingIndicator");
-    const messageInput = document.getElementById("messageInput");
-    const replyContainer = document.getElementById("replyContainer");
-    const replyText = document.getElementById("replyText");
-
-    // Global variable to hold the ID of the message being replied to.
-    let replyToMessageId = null;
-
-    // Build the SignalR connection.
-    const connection = new signalR.HubConnectionBuilder()
-      .withUrl("/chat")
-      .build();
-
-    // Append a chat message bubble to the chat window.
-    function appendMessage(chatMessage, isMyMessage) {
-      const messageElem = document.createElement("div");
-      messageElem.classList.add("message");
-      messageElem.classList.add(isMyMessage ? "my-message" : "other-message");
-
-      // If the message is a reply, show a reply preview within the bubble.
-      if (chatMessage.replyToMessageId) {
-        const replyBox = document.createElement("div");
-        replyBox.classList.add("reply-box");
-        // For simplicity, we display the original message ID.
-        // In a full implementation, you might store and display the original sender and a snippet.
-        replyBox.textContent = "Reply to: " + chatMessage.replyToMessageId;
-        messageElem.appendChild(replyBox);
-      }
-      
-      // Main message content.
-      messageElem.innerHTML += `<strong>${chatMessage.displayName}</strong><br>${chatMessage.message}`;
-      
-      // If the message is from you, add a status indicator.
-      if (isMyMessage) {
-        messageElem.innerHTML += `<div class="status" id="status-${chatMessage.id}">Sent</div>
+      font-s
