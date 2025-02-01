@@ -16,4 +16,8 @@ public class ChatMessage
     
     // Timestamp for when the message was sent.
     public DateTime Timestamp { get; set; }
+    
+    // New property: the ID of the message being replied to.
+    // This will be null if the message is not a reply.
+    public string? ReplyToMessageId { get; set; }
 }
