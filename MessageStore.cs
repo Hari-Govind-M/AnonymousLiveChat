@@ -21,7 +21,7 @@ public class MessageStore
     {
         lock (_lock)
         {
-            // Return a copy of the current messages.
+            // Return a copy of the message list.
             return _messages.ToList();
         }
     }
