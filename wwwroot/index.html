@@ -3,8 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Sci‑Fi Anonymous Chat</title>
-  <!-- Import Google Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     /* Global resets */
     * {
@@ -13,58 +11,46 @@
       padding: 0;
     }
     body {
-      font-family: 'Roboto', sans-serif;
-      background: linear-gradient(135deg, #f0f2f5, #e0e5ec);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f7f7f7;
       height: 100vh;
       display: flex;
       flex-direction: column;
     }
-    /* Header with gradient and shadow */
+    /* Header styling */
     .header {
       background: linear-gradient(90deg, #1f1c2c, #928dab);
       color: white;
-      padding: 20px;
+      padding: 15px;
       text-align: center;
-      font-size: 26px;
-      font-weight: 700;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+      font-size: 24px;
+      font-weight: bold;
     }
     /* Chat container */
     .chat-container {
       flex: 1;
       display: flex;
       flex-direction: column;
-      background-color: #fff;
-      margin: 10px;
-      border-radius: 10px;
+      background-color: #e5e5e5;
       overflow: hidden;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    /* Message list area with smooth scrolling */
+    /* Message list area */
     .message-list {
       flex: 1;
       padding: 15px;
       overflow-y: auto;
-      background: #f7f7f7;
-      scroll-behavior: smooth;
+      background-color: #f0f0f0;
     }
     /* Chat bubble styling */
     .message {
       max-width: 70%;
-      padding: 12px 18px;
-      border-radius: 20px;
-      margin-bottom: 12px;
-      font-size: 15px;
-      line-height: 1.5;
-      opacity: 0;
-      transform: translateY(20px);
-      animation: fadeInUp 0.4s forwards;
-    }
-    @keyframes fadeInUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+      padding: 10px 15px;
+      border-radius: 15px;
+      margin-bottom: 10px;
+      position: relative;
+      font-size: 14px;
+      line-height: 1.4;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     }
     .my-message {
       background-color: #d1f0d1;
@@ -76,7 +62,7 @@
       align-self: flex-start;
       border-top-left-radius: 0;
     }
-    /* Status text for sent/read */
+    /* Status text */
     .status {
       font-size: 10px;
       color: #888;
@@ -90,76 +76,37 @@
       padding: 5px 15px;
       font-size: 13px;
     }
-    /* Input area */
+    /* Input area styling */
     .input-area {
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 15px;
-      background-color: #fff;
+      padding: 10px;
+      background-color: #ffffff;
       border-top: 1px solid #ccc;
+      width: 100%;
     }
     .input-area input {
       width: 100%;
-      padding: 12px;
+      padding: 10px;
       border: 1px solid #ccc;
-      border-radius: 25px;
+      border-radius: 20px;
       outline: none;
-      font-size: 15px;
+      font-size: 14px;
       margin-bottom: 10px;
     }
     .input-area button {
       background-color: #928dab;
       color: white;
       border: none;
-      padding: 10px 25px;
-      border-radius: 25px;
+      padding: 10px 20px;
+      border-radius: 20px;
       cursor: pointer;
-      font-size: 15px;
+      font-size: 14px;
       transition: background-color 0.3s;
     }
     .input-area button:hover {
       background-color: #1f1c2c;
-    }
-    /* Reply preview container (shown above the input area) */
-    .reply-container {
-      display: none;
-      background-color: #eef;
-      padding: 8px 15px;
-      border-left: 3px solid #928dab;
-      margin-bottom: 10px;
-      font-size: 13px;
-      width: 100%;
-      position: relative;
-      border-radius: 5px;
-    }
-    .reply-container button {
-      background: transparent;
-      border: none;
-      color: #928dab;
-      cursor: pointer;
-      font-size: 12px;
-      position: absolute;
-      right: 10px;
-      top: 8px;
-    }
-    /* Style for showing reply context within a message bubble */
-    .reply-box {
-      border-left: 2px solid #928dab;
-      padding-left: 10px;
-      margin-bottom: 8px;
-      font-size: 13px;
-      color: #555;
-    }
-    /* Reply button inside a message bubble */
-    .reply-button {
-      background: transparent;
-      border: none;
-      color: #008069;
-      cursor: pointer;
-      font-size: 13px;
-      margin-top: 8px;
-      text-decoration: underline;
     }
   </style>
 </head>
@@ -168,11 +115,6 @@
   <div class="chat-container">
     <div id="chat" class="message-list"></div>
     <div id="typingIndicator" class="typing-indicator" style="display:none;"></div>
-    <!-- Reply preview container -->
-    <div id="replyContainer" class="reply-container">
-      <span id="replyText"></span>
-      <button onclick="cancelReply()">X</button>
-    </div>
     <div class="input-area">
       <input type="text" id="messageInput" placeholder="Type a message...">
       <button id="sendButton">Send</button>
@@ -199,11 +141,6 @@
     const chatDiv = document.getElementById("chat");
     const typingIndicator = document.getElementById("typingIndicator");
     const messageInput = document.getElementById("messageInput");
-    const replyContainer = document.getElementById("replyContainer");
-    const replyText = document.getElementById("replyText");
-
-    // Global variable to hold the ID of the message being replied to.
-    let replyToMessageId = null;
 
     // Build the SignalR connection.
     const connection = new signalR.HubConnectionBuilder()
@@ -216,19 +153,9 @@
       messageElem.classList.add("message");
       messageElem.classList.add(isMyMessage ? "my-message" : "other-message");
 
-      // If the message is a reply, show a reply preview within the bubble.
-      if (chatMessage.replyToMessageId) {
-        const replyBox = document.createElement("div");
-        replyBox.classList.add("reply-box");
-        // For simplicity, we display the original message ID.
-        // In a full implementation, you might display the original sender's name and a snippet.
-        replyBox.textContent = "Reply to: " + chatMessage.replyToMessageId;
-        messageElem.appendChild(replyBox);
-      }
-      
       // Main message content.
-      messageElem.innerHTML += `<strong>${chatMessage.displayName}</strong><br>${chatMessage.message}`;
-      
+      messageElem.innerHTML = `<strong>${chatMessage.displayName}</strong><br>${chatMessage.message}`;
+
       // If the message is from you, add a status indicator.
       if (isMyMessage) {
         messageElem.innerHTML += `<div class="status" id="status-${chatMessage.id}">Sent</div>`;
@@ -237,13 +164,6 @@
           if (statusSpan) statusSpan.textContent = "Read";
         }, 2000);
       }
-      
-      // Add a "Reply" button to each message.
-      const replyBtn = document.createElement("button");
-      replyBtn.textContent = "Reply";
-      replyBtn.classList.add("reply-button");
-      replyBtn.onclick = () => { setReply(chatMessage); };
-      messageElem.appendChild(replyBtn);
       
       chatDiv.appendChild(messageElem);
       chatDiv.scrollTop = chatDiv.scrollHeight;
@@ -278,7 +198,7 @@
       console.error(err.toString());
     });
 
-    // Throttle typing events.
+    // Throttle for typing events.
     let typingTimeout;
     messageInput.addEventListener("input", function () {
       if (this.value.length > 0) {
@@ -290,31 +210,16 @@
       }
     });
 
-    // Set the reply context when the user clicks "Reply" on a message.
-    function setReply(message) {
-      replyToMessageId = message.id;
-      let replyPreview = message.message.length > 30 ? message.message.substring(0, 30) + "..." : message.message;
-      replyContainer.style.display = "block";
-      replyText.textContent = "Replying to: " + replyPreview;
-    }
-
-    // Cancel the reply context.
-    function cancelReply() {
-      replyToMessageId = null;
-      replyContainer.style.display = "none";
-    }
-
     // Send a message when the send button is clicked.
     document.getElementById("sendButton").addEventListener("click", function () {
       const message = messageInput.value.trim();
-      console.log("Send clicked. Message:", message, "ReplyTo:", replyToMessageId);
+      console.log("Send clicked. Message:", message);
       if (message) {
         const displayName = getRandomName();
-        connection.invoke("SendMessage", clientId, displayName, message, replyToMessageId || "")
+        connection.invoke("SendMessage", clientId, displayName, message)
           .then(() => console.log("Message sent successfully"))
           .catch(err => console.error("Error sending message:", err.toString()));
         messageInput.value = "";
-        cancelReply();
       }
     });
 
