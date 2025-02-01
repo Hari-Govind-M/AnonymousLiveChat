@@ -11,17 +11,15 @@ public class ChatHub : Hub
         _messageStore = messageStore;
     }
 
-    // Updated SendMessage method that accepts an extra parameter for replies.
-    public async Task SendMessage(string senderId, string displayName, string message, string replyToMessageId)
+    // Receives a message from a client.
+    public async Task SendMessage(string senderId, string displayName, string message)
     {
         var chatMessage = new ChatMessage
         {
             SenderId = senderId,
             DisplayName = displayName,
             Message = message,
-            Timestamp = DateTime.UtcNow,
-            // Set ReplyToMessageId to null if no reply is intended.
-            ReplyToMessageId = string.IsNullOrEmpty(replyToMessageId) ? null : replyToMessageId
+            Timestamp = DateTime.UtcNow
         };
 
         _messageStore.AddMessage(chatMessage);
