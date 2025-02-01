@@ -1,127 +1,79 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <title>Sci‑Fi Anonymous Chat</title>
+  <meta charset="utf-8" />
+  <title>Anonymous Live Chat</title>
   <style>
-    /* Global resets */
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: #f7f7f7;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-    }
-    /* Header with a gradient */
-    .header {
-      background: linear-gradient(90deg, #1f1c2c, #928dab);
-      color: white;
-      padding: 15px;
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-    }
-    /* Chat container */
-    .chat-container {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      background-color: #e5e5e5;
-      overflow: hidden;
-    }
-    /* Message list area */
-    .message-list {
-      flex: 1;
-      padding: 15px;
-      overflow-y: auto;
-      background-color: #f0f0f0;
-    }
-    /* Chat bubble styling */
-    .message {
-      max-width: 70%;
-      padding: 10px 15px;
-      border-radius: 15px;
-      margin-bottom: 10px;
-      position: relative;
-      font-size: 14px;
-      line-height: 1.4;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-    .my-message {
-      background-color: #d1f0d1;
-      align-self: flex-end;
-      border-top-right-radius: 0;
-    }
-    .other-message {
-      background-color: #ffffff;
-      align-self: flex-start;
-      border-top-left-radius: 0;
-    }
-    /* Status text for sent/read */
-    .status {
-      font-size: 10px;
-      color: #888;
-      margin-top: 5px;
-      text-align: right;
-    }
-    /* Typing indicator styling */
-    .typing-indicator {
-      font-style: italic;
-      color: #555;
-      padding: 5px 15px;
-      font-size: 13px;
-    }
-    /* Input area */
-    .input-area {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 10px;
-      background-color: #ffffff;
-      border-top: 1px solid #ccc;
-      width: 100%;
-    }
-    .input-area input {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #ccc;
-      border-radius: 20px;
-      outline: none;
-      font-size: 14px;
-    }
-    .input-area button {
-      background-color: #928dab;
-      color: white;
-      border: none;
-      padding: 10px 20px;
-      margin-top: 10px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 14px;
-      transition: background-color 0.3s;
-    }
-    .input-area button:hover {
-      background-color: #1f1c2c;
-    }
-    /* Reply preview container (shown above the input area) */
-    .reply-container {
-      display: none;
-      background-color: #eef;
-      padding: 8px 15px;
-      border-left: 3px solid #928dab;
-      margin: 5px 0;
-      font-size: 13px;
-      width: 100%;
-      position: relative;
-    }
-    .reply-container button {
-      background: transparent;
-      border: none;
-      color: #928dab;
-      cursor: pointer;
-      font-s
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    #chat { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; margin-bottom: 10px; }
+    #messageInput { width: 80%; }
+  </style>
+</head>
+<body>
+  <h1>Anonymous Live Chat</h1>
+  <div id="chat"></div>
+  <input type="text" id="messageInput" placeholder="Type a message..." />
+  <button id="sendButton">Send</button>
+
+  <!-- Reference the SignalR client library from CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/7.0.0/signalr.min.js" crossorigin="anonymous"></script>
+  <script>
+    // Generate a random username for anonymity.
+    const user = 'User-' + Math.floor(Math.random() * 100000);
+    const chatDiv = document.getElementById("chat");
+
+    // Build the SignalR connection.
+    const connection = new signalR.HubConnectionBuilder()
+      .withUrl("/chat")
+      .build();
+
+    // When a new message is received, append it to the chat window.
+    connection.on("ReceiveMessage", function (chatMessage) {
+      const time = new Date(chatMessage.timestamp).toLocaleTimeString();
+      const messageElem = document.createElement("div");
+      messageElem.textContent = `[${time}] ${chatMessage.displayName}: ${chatMessage.message}`;
+      chatDiv.appendChild(messageElem);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    });
+
+    // Start the connection.
+    connection.start().then(function () {
+      console.log("Connected as " + user);
+      // Load previous messages (only those within the last 24 hours).
+      fetch('/messages')
+        .then(response => response.json())
+        .then(data => {
+          data.forEach(chatMessage => {
+            const time = new Date(chatMessage.timestamp).toLocaleTimeString();
+            const messageElem = document.createElement("div");
+            messageElem.textContent = `[${time}] ${chatMessage.displayName}: ${chatMessage.message}`;
+            chatDiv.appendChild(messageElem);
+          });
+          chatDiv.scrollTop = chatDiv.scrollHeight;
+        });
+    }).catch(function (err) {
+      console.error(err.toString());
+    });
+
+    // Send a message when the send button is clicked.
+    document.getElementById("sendButton").addEventListener("click", function () {
+      const messageInput = document.getElementById("messageInput");
+      const message = messageInput.value.trim();
+      if (message) {
+        connection.invoke("SendMessage", user, user, message)
+          .catch(function (err) {
+            console.error(err.toString());
+          });
+        messageInput.value = "";
+      }
+    });
+
+    // Allow sending the message with the Enter key.
+    document.getElementById("messageInput").addEventListener("keyup", function (event) {
+      if (event.key === "Enter") {
+        document.getElementById("sendButton").click();
+      }
+    });
+  </script>
+</body>
+</html>
