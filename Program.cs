@@ -6,7 +6,8 @@ using System.Linq;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure SignalR to use Azure SignalR Service with your connection string.
+// Configure SignalR to use Azure SignalR Service.
+// Make sure your connection string is set in your configuration (e.g., in appsettings.json).
 builder.Services.AddSignalR().AddAzureSignalR(options =>
 {
     options.ConnectionString = builder.Configuration["Azure:SignalR:ConnectionString"];
@@ -22,7 +23,7 @@ if (app.Environment.IsDevelopment())
     app.UseDeveloperExceptionPage();
 }
 
-// Serve static files (this will serve our index.html from wwwroot)
+// Serve static files (this serves the files in wwwroot).
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
@@ -33,7 +34,7 @@ app.MapHub<ChatHub>("/chat");
 app.MapGet("/messages", (MessageStore store) =>
 {
     var now = DateTime.UtcNow;
-    // Return only messages sent in the last 24 hours.
+    // Only return messages sent in the last 24 hours.
     var messages = store.GetMessages().Where(m => (now - m.Timestamp).TotalHours < 24);
     return messages;
 });
